@@ -5,3 +5,8 @@ seaborn
 scikit-learn
 opendatasets
 scipy
+xgboost
+mlflow
+logging
+logger
+pipeline
