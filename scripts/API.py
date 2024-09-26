@@ -1,37 +1,39 @@
-from fastapi import FastAPI
-import joblib
-import pandas as pd
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import joblib
+import numpy as np
 
 # Initialize FastAPI app
 app = FastAPI()
 
-# Load the trained model (replace with your model path)
+# Load the trained model
 model = joblib.load("../models/model_25-09-2024-18-25-55.pkl")
 
-# Define the input data model (adjust based on your features)
+# Define input data model
 class InputData(BaseModel):
-    feature1: float
-    feature2: float
-    feature3: float
-    # Add more fields as per your model input
+    features: list
 
-# Health check route
-@app.get("/")
-def read_root():
-    return {"message": "API is working"}
-
-# Prediction route
+# Define API endpoints
 @app.post("/predict")
-def predict(data: InputData):
-    # Convert input data to a DataFrame
-    input_df = pd.DataFrame([data.dict()])
+async def predict(data: InputData):
+    try:
+        # Convert input data to numpy array
+        input_data = np.array(data.features).reshape(1, -1)
+        
+        # Make prediction
+        prediction = model.predict(input_data)
+        
+        # Return prediction
+        return {"prediction": prediction.tolist()}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    # Preprocessing steps (if necessary)
-    # Example: input_df = preprocess(input_df)
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
 
-    # Make prediction
-    prediction = model.predict(input_df)
-
-    # Return prediction as JSON response
-    return {"prediction": prediction.tolist()}
+# Run the API with uvicorn
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
