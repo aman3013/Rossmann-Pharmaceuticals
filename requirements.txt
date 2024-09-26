@@ -10,3 +10,4 @@ mlflow
 logging
 logger
 pipeline
+fastapi
